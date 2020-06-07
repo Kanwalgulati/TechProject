@@ -9,23 +9,24 @@ import com.tech.blog.dao.ConnectionProvider;
 import com.tech.blog.dao.UserDao;
 import com.tech.blog.entities.Message;
 import com.tech.blog.entities.User;
+import com.tech.blog.helper.helper;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.*;
-import javax.jms.Session;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.Part;
 
 /**
  *
  * @author kawal
  */
-@WebServlet(name = "LoginServlet", urlPatterns = {"/LoginServlet"})
-public class LoginServlet extends HttpServlet {
+@MultipartConfig
+public class EditServlet extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -44,30 +45,66 @@ public class LoginServlet extends HttpServlet {
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Servlet LoginServlet</title>");            
+            out.println("<title>Servlet EditServlet</title>");            
             out.println("</head>");
             out.println("<body>");
-            String email=request.getParameter("email");
-            String password=request.getParameter("password");
-            UserDao dao=new UserDao(ConnectionProvider.getConnection());
-            User u=dao.getUserByEmailAndPassword(email, password);
-            if(u==null)
+            
+            String userEmail=request.getParameter("user_email");
+            
+            String userName=request.getParameter("user_name");
+            
+            String userPassword=request.getParameter("user_password");
+            
+            String userAbout=request.getParameter("user_about");
+            
+            Part part=request.getPart("image");
+            String imageName=part.getSubmittedFileName();
+            
+            
+            //Get data from current session
+            
+            HttpSession s=request.getSession();
+            User user=(User)s.getAttribute("currentUser");
+            user.setEmail(userEmail);
+            user.setName(userName);
+            user.setPassword(userPassword);
+            user.setAbout(userAbout);
+            String oldProfile=user.getProfile();
+            user.setProfile(imageName);
+            
+            //Update in the database
+            
+            UserDao userdao=new UserDao(ConnectionProvider.getConnection());
+            boolean ans=userdao.updateUser(user);
+            if(ans)
             {
-               // out.println("Invalid Details ! Try Again");
-                Message msg=new Message("Invalid Details! Try With another ! ","Error","alert-danger");
-                HttpSession s=request.getSession();
-                s.setAttribute("msg", msg);
-                response.sendRedirect("Login.jsp");
+                String Path=request.getRealPath("/")+"pics"+File.separator+user.getProfile();
+                String oldProfilePath=request.getRealPath("/")+"pics"+File.separator+oldProfile;
+                if(!oldProfile.equals("Default.png"))
+                {
+                    helper.deleteFile(oldProfilePath);
+                }
+                if(helper.saveFile(part.getInputStream(), Path))
+                {
+                   out.println("updated");
+                   Message msg=new Message("Profile Updatsed","Success","alert-success");
+                 //HttpSession s=request.getSession();
+                   s.setAttribute("msg", msg);
+                }
+                else
+                {
+                   out.println("File Not Updated");
+                   Message msg=new Message("Something Went Wrong","Error","alert-danger");
+                   s.setAttribute("msg", msg);
+                }
+                
             }
             else
             {
-                System.out.println("Chal To gya ha ye");
-                HttpSession s=request.getSession();
-                s.setAttribute("currentUser",u);
-                response.sendRedirect("Profile.jsp");
-                
+                out.println("Something Went wrong");
+                        Message msg=new Message("Something Went Wrong","Error","alert-danger");
             }
-            
+            response.sendRedirect("Profile.jsp");
             out.println("</body>");
             out.println("</html>");
         }

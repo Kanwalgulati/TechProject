@@ -93,9 +93,9 @@ public class User
     public void setAbout(String about) {
         this.about = about;
     }
-    public void getProfile(String profile)
+    public String getProfile()
     {
-        this.profile=profile;
+        return profile;
     }
     public void setProfile(String profile)
     {

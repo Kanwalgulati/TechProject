@@ -4,6 +4,7 @@
     Author     : kawal
 --%>
 
+<%@page import="com.tech.blog.entities.Message"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
@@ -40,6 +41,25 @@
                                 <br>
                                 Login Here
                             </div>
+                            
+                            <%
+                                
+                                Message m=(Message) session.getAttribute("msg");
+                                if(m!=null)
+                                {
+                            %>
+                            <center>
+                                <div class="alert <%=m.getCssClass() %>" role="alert">
+                                <%= m.getContent() %>
+                            </div>
+                            </center>
+                            <%
+                                }
+                                session.removeAttribute("msg");
+                                    
+                             %>
+                            
+                            
                             <div class="card-body">
                                 
                                 <form action="LoginServlet" method="post">

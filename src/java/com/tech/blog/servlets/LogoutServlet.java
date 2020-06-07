@@ -5,27 +5,20 @@
  */
 package com.tech.blog.servlets;
 
-import com.tech.blog.dao.ConnectionProvider;
-import com.tech.blog.dao.UserDao;
 import com.tech.blog.entities.Message;
-import com.tech.blog.entities.User;
 import java.io.IOException;
 import java.io.PrintWriter;
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.*;
-import javax.jms.Session;
 import javax.servlet.http.HttpSession;
 
 /**
  *
  * @author kawal
  */
-@WebServlet(name = "LoginServlet", urlPatterns = {"/LoginServlet"})
-public class LoginServlet extends HttpServlet {
+public class LogoutServlet extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -44,30 +37,17 @@ public class LoginServlet extends HttpServlet {
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Servlet LoginServlet</title>");            
+            out.println("<title>Servlet LogoutServlet</title>");            
             out.println("</head>");
-            out.println("<body>");
-            String email=request.getParameter("email");
-            String password=request.getParameter("password");
-            UserDao dao=new UserDao(ConnectionProvider.getConnection());
-            User u=dao.getUserByEmailAndPassword(email, password);
-            if(u==null)
-            {
-               // out.println("Invalid Details ! Try Again");
-                Message msg=new Message("Invalid Details! Try With another ! ","Error","alert-danger");
-                HttpSession s=request.getSession();
-                s.setAttribute("msg", msg);
-                response.sendRedirect("Login.jsp");
-            }
-            else
-            {
-                System.out.println("Chal To gya ha ye");
-                HttpSession s=request.getSession();
-                s.setAttribute("currentUser",u);
-                response.sendRedirect("Profile.jsp");
-                
-            }
+
+            HttpSession s=request.getSession();
+            s.removeAttribute("currentUser");
             
+            Message m=new Message("Logout Successful","Success","alert-success");
+            s.setAttribute("msg", m);
+            response.sendRedirect("Login.jsp");
+            
+            out.println("<body>");
             out.println("</body>");
             out.println("</html>");
         }

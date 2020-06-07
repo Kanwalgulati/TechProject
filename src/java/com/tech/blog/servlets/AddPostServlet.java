@@ -6,26 +6,28 @@
 package com.tech.blog.servlets;
 
 import com.tech.blog.dao.ConnectionProvider;
-import com.tech.blog.dao.UserDao;
-import com.tech.blog.entities.Message;
+import com.tech.blog.dao.PostDao;
+import com.tech.blog.entities.Post;
 import com.tech.blog.entities.User;
+import com.tech.blog.helper.helper;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import javax.jms.Session;
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.*;
-import javax.jms.Session;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.Part;
 
 /**
  *
  * @author kawal
  */
-@WebServlet(name = "LoginServlet", urlPatterns = {"/LoginServlet"})
-public class LoginServlet extends HttpServlet {
+@MultipartConfig
+public class AddPostServlet extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -39,37 +41,32 @@ public class LoginServlet extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter()) {
+        try (PrintWriter out = response.getWriter()) 
+        {
             /* TODO output your page here. You may use following sample code. */
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet LoginServlet</title>");            
-            out.println("</head>");
-            out.println("<body>");
-            String email=request.getParameter("email");
-            String password=request.getParameter("password");
-            UserDao dao=new UserDao(ConnectionProvider.getConnection());
-            User u=dao.getUserByEmailAndPassword(email, password);
-            if(u==null)
+            int cid=Integer.parseInt(request.getParameter("cid"));
+            String pTitle=request.getParameter("post_title");
+            String pContent=request.getParameter("post_content");
+            String pCode=request.getParameter("post_code");
+            Part part=request.getPart("post_pic");
+            HttpSession session=request.getSession();
+            User user=(User)session.getAttribute("currentUser");
+            user.getId();
+            out.println("Your post Title is : "+pTitle+" id =  " +cid);
+            out.println(part.getSubmittedFileName());
+            Post p=new Post(pTitle, pCode, pContent,part.getSubmittedFileName(), null, cid, user.getId());
+            PostDao dao=new PostDao(ConnectionProvider.getConnection());
+            if(dao.savePost(p))
             {
-               // out.println("Invalid Details ! Try Again");
-                Message msg=new Message("Invalid Details! Try With another ! ","Error","alert-danger");
-                HttpSession s=request.getSession();
-                s.setAttribute("msg", msg);
-                response.sendRedirect("Login.jsp");
+               String path=request.getRealPath("/")+"blog_pics"+File.separator+part.getSubmittedFileName();
+               helper.saveFile(part.getInputStream(), path);
+               out.println("done");
+               
             }
             else
             {
-                System.out.println("Chal To gya ha ye");
-                HttpSession s=request.getSession();
-                s.setAttribute("currentUser",u);
-                response.sendRedirect("Profile.jsp");
-                
+                out.println("error");
             }
-            
-            out.println("</body>");
-            out.println("</html>");
         }
     }
 
